@@ -6,16 +6,21 @@
             }
             html {
                 margin: 0;
+                background-color: #000;
+                
             }
             #animated-bg {
-                background: url("images/bg-1.jpeg") no-repeat center center;
                 background-size: cover;
-                transition: background 3s;
+                transition: opacity 2s ease-in-out;
                 min-height: 100vh;
                 position: relative;
+                opacity: 1;
+                transform: translateZ(0);
             }
             body {
                 margin: 0;
+                background: url("images/bg-1.jpeg") no-repeat center center;
+                background-size: cover;
             }
             div#texttop {
                 color: #fff;
@@ -24,6 +29,7 @@
                 left: 50%;
                 transform: translateY(-50%) translateX(-50%);
                 padding: 2rem;
+                border-radius: 1rem;
                 background: rgba(0, 0, 0, 0.3);
                 font-family: Oxygen, sans-serif;
                 position: absolute;
@@ -42,7 +48,7 @@
                     display: none;
                 }
             }
-            #animated-bg:before {
+            #animated-bg:before, body:before {
                 content: "";
                 position: absolute;
                 top: 0;
@@ -50,45 +56,77 @@
                 left: 0;
                 right: 0;
                 background-color: violet;
-                opacity: 0.2;
+                opacity: 0;
+            }
+            #animated-bg.started:before {
+                opacity: 0.15;
+            }
+            body:before {
+                opacity: 0.15;
             }
             a, a:hover, a:active, a:visited { color: white; }
         </style>
         <script>
             var bgImageArray = ["1", "2", "3", "4", "5", "6"],
                 base = "images/bg-",
-                secs = 4;
+                secs = 8;
+
+            // Preload all images
             bgImageArray.forEach(function (img) {
-                new Image().src = base + img + ".jpeg";
+                var preloadedImage = new Image();
+                preloadedImage.src = base + img + ".jpeg";
             });
 
+            var k = 1;
+
             function backgroundSequence() {
-                window.clearTimeout();
-                var k = 0;
-                for (i = 0; i < bgImageArray.length; i++) {
-                    setTimeout(function () {
-                        document.getElementById("animated-bg").style.background = "url(" + base + bgImageArray[k] + ".jpeg) no-repeat center center";
-                        document.getElementById("animated-bg").style.backgroundSize = "cover";
-                        if (k + 1 === bgImageArray.length) {
-                            setTimeout(function () {
-                                backgroundSequence();
-                            }, secs * 1000);
-                        } else {
-                            k++;
-                        }
-                    }, secs * 1000 * i);
-                }
+                setTimeout(function () {
+                    k++;
+                    if (k === bgImageArray.length) k = 0;
+
+                    // Preload the new background image
+                    var img_tag = new Image();
+                    img_tag.onload = function () {
+                        // Fade out the current background
+                        var bgElement = document.getElementById("animated-bg");
+                        bgElement.style.opacity = 0;  // Fade out the current background
+                        bgElement.classList.add("started");
+
+                        // After fade-out completes, change the background image
+                        setTimeout(function () {
+                            bgElement.style.backgroundImage = "url(" + base + bgImageArray[k] + ".jpeg)";
+                            
+                            // Fade in the new background
+                            bgElement.style.opacity = 1;
+                        }, 4000); // Wait for the fade-out to finish before changing the image
+                        updateBodyBackground()
+                    }
+                    img_tag.src = base + bgImageArray[k] + ".jpeg";
+
+                    backgroundSequence(); // Recursively repeat the process
+                }, secs * 1000);
             }
-            backgroundSequence();
+
+            function updateBodyBackground() {
+                k++;
+                if (k === bgImageArray.length) k = 0;
+                // Fade out the current background
+                var bgElement = document.getElementsByTagName("body")[0];
+                bgElement.style.backgroundImage = "url(" + base + bgImageArray[k] + ".jpeg)";
+            }
+
+            window.addEventListener('load', (event) => {
+                backgroundSequence();
+            });
         </script>
     </head>
     <body>
         <div id="animated-bg">
-            <div id="texttop">
-                <h1>Data Science for Drug Design</h1>
-                <p>From protein structures to cellular signaling:<br>advancing network medicine with data</p>
-                <p>Learn more: <a href="https://researchprofiles.ku.dk/en/persons/albert-j-kooistra">here</a></p>
-            </div>
+        </div>
+        <div id="texttop">
+            <h1>Data Science for Drug Design</h1>
+            <p>From protein structures to cellular signaling:<br>advancing network medicine with data</p>
+            <p>Learn more: <a href="https://researchprofiles.ku.dk/en/persons/albert-j-kooistra">here</a></p>
         </div>
     </body>
 </html>
